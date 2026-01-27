@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Esports Disciplines</title>
+    <meta name="description" content="Choose a discipline to see matches: Dota 2, LoL, CS:GO">
+    <meta name="keywords" content="esports, disciplines, matches">
+</head>
+<body>
+    <h1>Select a Discipline</h1>
+    <ul>
+    {% for code, name in disciplines.items() %}
+        <li>
+            <a href="{{ code }}/yesterday">{{ name }} - Yesterday</a> |
+            <a href="{{ code }}/today">{{ name }} - Today</a> |
+            <a href="{{ code }}/tomorrow">{{ name }} - Tomorrow</a>
+        </li>
+    {% endfor %}
+    </ul>
+</body>
+</html>

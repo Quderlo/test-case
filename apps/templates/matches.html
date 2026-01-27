@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ seo.title }}</title>
+    <meta name="description" content="{{ seo.description }}">
+    <meta name="keywords" content="{{ seo.keywords }}">
+    <script type="application/ld+json">
+{{ schema_org | tojson(indent=2) | safe }}
+    </script>
+</head>
+<body>
+    <h1>{{ seo.title }}</h1>
+
+    <nav>
+        <a href="/{{ discipline|lower }}/yesterday">Yesterday</a>
+        <a href="/{{ discipline|lower }}/today">Today</a>
+        <a href="/{{ discipline|lower }}/tomorrow">Tomorrow</a>
+        <a href="/">Home</a>
+    </nav>
+
+    {% if matches %}
+        {% for match in matches %}
+        <div class="match-card">
+            <h2>{{ match.name }}</h2>
+            <div class="match-info">League/Tournament: {{ match.league }}</div>
+            <div class="match-info">Start: {{ match.begin_at | format_datetime }}</div>
+            <ul class="opponents">
+                {% for o in match.opponents %}
+                    <li>{{ o.name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No matches available for this day.</p>
+    {% endif %}
+</body>
+</html>
