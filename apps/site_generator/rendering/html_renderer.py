@@ -1,7 +1,8 @@
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typing import Dict, List, Any
-from apps.site_generator.config.settings import SITE_BASE_URL, TEMPLATES_DIR
+
+from apps.site_generator.config.settings import SITE_BASE_URL, TEMPLATES_DIR, DISCIPLINES
 
 
 class HTMLRenderer:
@@ -9,36 +10,52 @@ class HTMLRenderer:
     def __init__(self):
         self.env = Environment(
             loader=FileSystemLoader(TEMPLATES_DIR),
-            autoescape=select_autoescape(["html", "xml"])
+            autoescape=select_autoescape(["html", "xml"]),
         )
-        self.env.filters['format_datetime'] = self.format_datetime
+
+        # Фильтры для шаблона
+        self.env.filters["match_date"] = self.format_match_date
+        self.env.filters["match_time"] = self.format_match_time
 
     @staticmethod
-    def format_datetime(value: str, fmt="%Y-%m-%d %H:%M UTC") -> str:
+    def _parse_datetime(value: str) -> datetime | None:
         try:
-            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
-            return dt.strftime(fmt)
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
         except Exception:
-            return value
+            return None
+
+    @classmethod
+    def format_match_date(cls, value: datetime | None) -> str:
+        if not value:
+            return ""
+        return value.strftime("%d %b")
+
+    @classmethod
+    def format_match_time(cls, value: datetime | None) -> str:
+        if not value:
+            return ""
+        return value.strftime("%H:%M")
 
     def render_matches_page(
-        self,
-        matches: List[Dict[str, Any]],
-        day: str,
-        discipline: str,
-        return_string: bool = True,
-    ) -> str:
+            self,
+            matches: List[Dict[str, Any]],
+            day: str,
+            discipline_key: str,
+            return_string: bool = True,
+    ):
+        discipline_name = DISCIPLINES.get(discipline_key, discipline_key.capitalize())
         context = {
             "seo": {
-                "title": f"{discipline.upper()} esports matches on {day.capitalize()}",
-                "description": f"List of {discipline.upper()} matches on {day.capitalize()}",
-                "keywords": f"esports, {discipline}, matches, tournaments",
+                "title": f"{discipline_name} esports matches on {day.capitalize()}",
+                "description": f"List of {discipline_name} matches on {day.capitalize()}",
+                "keywords": f"esports, {discipline_name}, matches, tournaments",
             },
             "matches": matches,
             "day": day.capitalize(),
-            "discipline": discipline.upper(),
+            "discipline": discipline_name,
+            "discipline_key": discipline_key,
             "base_url": SITE_BASE_URL,
-            "schema_org": self.generate_schema(matches, day),
+            "schema_org": self.generate_schema(matches),
         }
         template = self.env.get_template("matches.html")
         return template.render(**context)
@@ -53,19 +70,27 @@ class HTMLRenderer:
             },
             "base_url": SITE_BASE_URL,
         }
+
         template = self.env.get_template("index.html")
         return template.render(**context)
 
-    def generate_schema(self, matches_list: list[dict], day: str) -> dict:
+    def generate_schema(self, matches_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         events = []
+
         for m in matches_list:
             opponents = [o.get("name") for o in m.get("opponents", [])]
+
             events.append({
                 "@type": "SportsEvent",
                 "name": m.get("name"),
                 "startDate": m.get("begin_at"),
-                "location": {"@type": "Place", "name": m.get("league", "")},
-                "competitor": [{"@type": "SportsTeam", "name": n} for n in opponents],
+                "competitor": [
+                    {"@type": "SportsTeam", "name": name}
+                    for name in opponents
+                ],
             })
-        return {"@context": "https://schema.org", "@graph": events if events else [{}]}
 
+        return {
+            "@context": "https://schema.org",
+            "@graph": events if events else [],
+        }

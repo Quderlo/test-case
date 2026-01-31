@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -31,9 +32,11 @@ TIMEZONE: str = os.getenv("SITE_TIMEZONE", "UTC")
 # Формат дат для API
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
-DISCIPLINES = {
-    "dota2": "Dota 2",
-    "lol": "League of Legends",
-    "csgo": "CS:GO",
-}
+DISCIPLINES_FILE = BASE_DIR / "apps" / "site_generator" / "config" / "disciplines.json"
 
+with open(DISCIPLINES_FILE, "r", encoding="utf-8") as f:
+    DISCIPLINES = json.load(f)
+
+MEDIA_STATIC = BASE_DIR / "media" / "static"
+
+PLACEHOLDER_LOGO = "/static/team_placeholder_logo.webp"
