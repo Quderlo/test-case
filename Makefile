@@ -7,16 +7,16 @@ test:
 
 docker-build:
 	@echo "Сборка Docker-образа Flask..."
-	docker-compose build web
+	docker compose build web
 
 docker-up:
 	@echo "Запуск контейнеров Flask + Nginx..."
-	docker-compose up -d
+	docker compose up -d
 
 docker-down:
 	@echo "Остановка контейнеров..."
-	docker-compose down
+	docker compose down
 
 docker-logs:
 	@echo "Логи всех контейнеров..."
-	docker-compose logs -f
+	docker compose logs -f
