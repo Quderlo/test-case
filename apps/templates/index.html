@@ -5,17 +5,23 @@
     <title>Esports Disciplines</title>
     <meta name="description" content="Choose a discipline to see matches: Dota 2, LoL, CS:GO">
     <meta name="keywords" content="esports, disciplines, matches">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Select a Discipline</h1>
-    <ul>
+<div class="container my-4">
+    <h1 class="mb-4">Select a Discipline</h1>
+    <ul class="list-group">
     {% for code, name in disciplines.items() %}
-        <li>
-            <a href="{{ code }}/yesterday">{{ name }} - Yesterday</a> |
-            <a href="{{ code }}/today">{{ name }} - Today</a> |
-            <a href="{{ code }}/tomorrow">{{ name }} - Tomorrow</a>
+        <li class="list-group-item d-flex justify-content-between flex-wrap">
+            <span>{{ name }}</span>
+            <span>
+                <a class="btn btn-sm btn-primary me-1" href="{{ code }}/yesterday">Yesterday</a>
+                <a class="btn btn-sm btn-primary me-1" href="{{ code }}/today">Today</a>
+                <a class="btn btn-sm btn-primary" href="{{ code }}/tomorrow">Tomorrow</a>
+            </span>
         </li>
     {% endfor %}
     </ul>
+</div>
 </body>
 </html>

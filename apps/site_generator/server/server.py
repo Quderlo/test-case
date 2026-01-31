@@ -1,12 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 
-from flask import Flask
+from flask import Flask, send_from_directory
 from apps.site_generator.infrastructure.pandascore.client import PandaScoreClient
 from apps.site_generator.services.matches_service import MatchesService
 from apps.site_generator.rendering.html_renderer import HTMLRenderer
-from apps.site_generator.config.settings import DISCIPLINES
+from apps.site_generator.config.settings import DISCIPLINES, MEDIA_STATIC
 
-app = Flask(__name__)
+
+app = Flask(__name__, static_folder=str(MEDIA_STATIC), static_url_path="/static")
 client = PandaScoreClient()
 service = MatchesService()
 renderer = HTMLRenderer()
@@ -16,7 +18,6 @@ renderer = HTMLRenderer()
 def home():
     return renderer.render_home(DISCIPLINES, return_string=True)
 
-
 @app.route("/<discipline>/<day>")
 def matches_page(discipline: str, day: str):
     if discipline not in DISCIPLINES:
@@ -24,18 +25,15 @@ def matches_page(discipline: str, day: str):
     if day not in ["yesterday", "today", "tomorrow"]:
         return "Страница не найдена", 404
 
-    # Получаем матчи динамически
-    if day == "yesterday":
-        matches = client.get_matches_yesterday(discipline)
-    elif day == "today":
-        matches = client.get_matches_today(discipline)
-    else:
-        matches = client.get_matches_tomorrow(discipline)
+    # Получаем матчи за 3 дня одним запросом
+    now = datetime.now(client.tz)
+    start = now - timedelta(days=1)
+    end = now + timedelta(days=2)
+    all_matches = client.get_matches_for_range(start, end, discipline)
+    grouped = service.group_matches_by_day(all_matches)
+    prepared = service.prepare_grouped_matches(grouped).get(day, [])
 
-    # Подготовка для шаблона
-    prepared = service.prepare_grouped_matches({"matches": matches}).get("matches", matches)
-    html = renderer.render_matches_page(prepared, day, discipline, return_string=True)
-    return html
+    return renderer.render_matches_page(prepared, day, discipline)
 
 
 if __name__ == "__main__":
